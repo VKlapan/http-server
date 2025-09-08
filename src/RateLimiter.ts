@@ -90,7 +90,7 @@ class RateLimiter {
 // Usage example:
 const options = {
   maxRequests: 5,
-  timeWindow: 100000, // 1 second window
+  timeWindow: 1000, // 1 second window
 };
 
 export const rateLimiter = new RateLimiter(options);

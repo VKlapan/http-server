@@ -3,7 +3,7 @@ import "dotenv/config";
 console.log("Hello world!");
 console.log("FROM ENV: ", process.env.OPENAI_API_KEY);
 
-import http from "node:http";
+import http, { Agent } from "node:http";
 
 import { rateLimiter } from "./RateLimiter.js";
 
@@ -12,6 +12,49 @@ const rateLimitMiddleware = rateLimiter.getMiddleware();
 
 const hostname: string = "127.0.0.1";
 const port: number = 3000;
+
+const user = {
+  name: "John Doe",
+  email: "jdoe@example.com",
+  age: 30,
+  address: {
+    street: "123 Main St",
+    city: "AnyTown",
+    state: "CA",
+    zip: "12345",
+  },
+};
+
+const routing = {
+  "/": (req: http.IncomingMessage, res: http.ServerResponse) => {
+    res.end("Hello from Node.js with TypeScript!\n");
+  },
+  "/api": (req: http.IncomingMessage, res: http.ServerResponse) => {
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ message: "API endpoint hit!" }));
+  },
+  "/api/method1": (req: http.IncomingMessage, res: http.ServerResponse) => {
+    console.log("Method1 called");
+    return { method: req.url, status: res.statusCode };
+  },
+  "/user": user,
+  "/user/name": () => user.name.toUpperCase(),
+  "/user/email": () => user.email,
+  "/user/age": user.age,
+};
+
+const types = {
+  object: JSON.stringify,
+  string: (data: string) => data,
+  number: (data: number) => data.toString(),
+  function: (
+    fn: Function,
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+  ) => JSON.stringify(fn(req, res)),
+  undefined: () => "Not Found\n",
+};
 
 const middlewareLogger = (
   req: http.IncomingMessage,
@@ -29,15 +72,11 @@ const server = http.createServer(
         res.statusCode = 200;
         res.setHeader("Content-Type", "text/plain");
 
-        if (req.url === "/") {
-          res.end("Hello from Node.js with TypeScript!\n");
-        } else if (req.url === "/api") {
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ message: "API endpoint hit!" }));
-        } else {
-          res.statusCode = 404;
-          res.end("Not Found\n");
-        }
+        const data = routing[req.url as keyof typeof routing];
+        const type = typeof data;
+        const serializer = types[type as keyof typeof types];
+        const result = serializer(data, req, res);
+        res.end(result);
       })
     );
   }
