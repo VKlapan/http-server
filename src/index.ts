@@ -46,3 +46,12 @@ const server = http.createServer(
 server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
+
+server.on("clientError", (err, socket) => {
+  console.error("Client error:", err);
+  socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+});
+
+server.on("error", (err) => {
+  console.error("Server error:", err);
+});
