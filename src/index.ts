@@ -3,7 +3,7 @@ import "dotenv/config";
 console.log("Hello world!");
 console.log("FROM ENV: ", process.env.OPENAI_API_KEY);
 
-import http, { Agent } from "node:http";
+import http from "node:http";
 
 import { rateLimiter } from "./RateLimiter.js";
 
@@ -73,9 +73,30 @@ const server = http.createServer(
         res.setHeader("Content-Type", "text/plain");
 
         const data = routing[req.url as keyof typeof routing];
-        const type = typeof data;
-        const serializer = types[type as keyof typeof types];
-        const result = serializer(data, req, res);
+
+        // JS approach
+        // const type = typeof data;
+        // const serializer = types[type as keyof typeof types];
+        // const result = serializer(data, req, res);
+
+        let result: string;
+        switch (typeof data) {
+          case "function":
+            result = types.function(data, req, res);
+            break;
+          case "object":
+            result = data !== null ? types.object(data) : types.undefined();
+            break;
+          case "string":
+            result = types.string(data);
+            break;
+          case "number":
+            result = types.number(data);
+            break;
+          default:
+            result = types.undefined();
+        }
+
         res.end(result);
       })
     );
