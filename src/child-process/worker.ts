@@ -1,17 +1,16 @@
-import "dotenv/config";
-
-console.log("Hello world!");
-console.log("FROM ENV: ", process.env.OPENAI_API_KEY);
-
 import http from "node:http";
-
-import { rateLimiter } from "./RateLimiter.js";
+import { rateLimiter } from "../RateLimiter.js";
 
 // Middleware to apply rate limiting
 const rateLimitMiddleware = rateLimiter.getMiddleware();
 
 const HOSTNAME: string = "127.0.0.1";
-const PORT: number = 3000;
+const BASE_PORT: number = 3000;
+
+const pid = process.pid;
+const id = parseInt(process.argv[2], 10);
+
+const PORT = BASE_PORT + id - 1;
 
 const user = {
   name: "John Doe",
@@ -65,19 +64,16 @@ const middlewareLogger = (
   next();
 };
 
+console.log(`Worker: ${id}, pid: ${pid}, port: ${PORT}`);
 const server = http.createServer(
   (req: http.IncomingMessage, res: http.ServerResponse) => {
     middlewareLogger(req, res, () =>
       rateLimitMiddleware(req, res, () => {
         res.statusCode = 200;
         res.setHeader("Content-Type", "text/plain");
+        res.setHeader("Process-Id", pid);
 
         const data = routing[req.url as keyof typeof routing];
-
-        // JS approach
-        // const type = typeof data;
-        // const serializer = types[type as keyof typeof types];
-        // const result = serializer(data, req, res);
 
         let result: string;
         switch (typeof data) {
