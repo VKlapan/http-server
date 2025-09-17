@@ -25,8 +25,9 @@
     "skipLibCheck": true, // Skips type-checking of declaration files for faster compilation
     "resolveJsonModule": true, // Allows importing JSON files as modules
     "declaration": true, // Generates `.d.ts` files for type definitions
+    "emitDeclarationOnly": true, //
     "allowSyntheticDefaultImports": true, // Allows default imports for CommonJS modules
-    //"allowImportingTsExtensions": true, // Allows importing `.ts` files with their extensions
+    "allowImportingTsExtensions": true, // Allows importing `.ts` files with their extensions
     "verbatimModuleSyntax": true, // Keeps the `import`/`export` syntax as-is without transformation
 
     // Include modern ECMAScript (ES2022) and DOM APIs for frontend

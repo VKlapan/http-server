@@ -13,7 +13,7 @@ console.log(`Master pid: ${pid}`);
 console.log(`Starting ${count} forks`);
 
 for (let i = 0; i < count; ) {
-  // The error occurs because child_process.fork expects ???? a CommonJS module (usually a .js file), not a TypeScript file (.ts).
+  //TODO Check it: The error occurs because child_process.fork expects ???? a CommonJS module (usually a .js file), not a TypeScript file (.ts).
   // Node.js cannot execute .ts files directly unless you use a loader like ts-node.
 
   child_process.fork(path.join(__dirname, "worker.ts"), [(++i).toString()]);

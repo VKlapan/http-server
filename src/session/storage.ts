@@ -1,14 +1,14 @@
-"use strict";
+import fs from "node:fs";
+import path from "node:path";
+import v8 from "node:v8";
+import { fileURLToPath } from "node:url";
 
-const fs = require("node:fs");
-const path = require("node:path");
-const v8 = require("node:v8");
-
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PATH = `${__dirname}/sessions`;
 
 const safePath =
-  (fn) =>
-  (token, ...args) => {
+  (fn: Function) =>
+  (token: string, ...args: any[]) => {
     const callback = args[args.length - 1];
     if (typeof token !== "string") {
       callback(new Error("Invalid session token"));
@@ -27,25 +27,34 @@ const writeSession = safePath(fs.writeFile);
 const deleteSession = safePath(fs.unlink);
 
 class Storage extends Map {
-  get(key, callback) {
+  getData(
+    key: string,
+    callback: (err: NodeJS.ErrnoException | null, data: any) => void
+  ) {
     const value = super.get(key);
     if (value) {
       callback(null, value);
       return;
     }
-    readSession(key, (err, data) => {
-      if (err) {
-        callback(err);
-        return;
+    readSession(
+      key,
+      (err: NodeJS.ErrnoException | null, data: NodeJS.ArrayBufferView) => {
+        if (err) {
+          //TODO if there is an error what the data will be?
+          callback(err, data);
+          return;
+        }
+        console.log(`Session loaded: ${key}`);
+        const session = v8.deserialize(data);
+        console.log("Session from the storage:");
+        console.dir(session, { depth: null });
+        super.set(key, session);
+        callback(null, session);
       }
-      console.log(`Session loaded: ${key}`);
-      const session = v8.deserialize(data);
-      super.set(key, session);
-      callback(null, session);
-    });
+    );
   }
 
-  save(key) {
+  saveData(key: string) {
     const value = super.get(key);
     if (value) {
       const data = v8.serialize(value);
@@ -55,7 +64,7 @@ class Storage extends Map {
     }
   }
 
-  delete(key) {
+  deleteData(key: string) {
     console.log("Delete: ", key);
     deleteSession(key, () => {
       console.log(`Session deleted: ${key}`);
@@ -63,4 +72,4 @@ class Storage extends Map {
   }
 }
 
-module.exports = new Storage();
+export default new Storage();

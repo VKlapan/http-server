@@ -8,7 +8,14 @@ const HOSTNAME: string = "127.0.0.1";
 const BASE_PORT: number = 3000;
 
 const pid = process.pid;
-const id = parseInt(process.argv[2], 10);
+
+let id: number | undefined;
+if (process.argv[2] !== undefined) {
+  id = parseInt(process.argv[2], 10);
+} else {
+  console.error("Please provide an ID as a command-line argument.");
+  process.exit(1);
+}
 
 const PORT = BASE_PORT + id - 1;
 

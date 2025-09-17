@@ -1,22 +1,24 @@
-"use strict";
+import http from "node:http";
+import { Client } from "./client.ts";
+import { Session } from "./session.ts";
 
-const http = require("node:http");
+type RouteHandler =
+  | (() => Promise<string | Record<string, any>>)
+  | ((client: Client) => Promise<string | Record<string, any>>);
 
-const Client = require("./client.cjs");
-const Session = require("./session.cjs");
-
-const routing = {
+const routing: Record<string, RouteHandler> = {
   "/": async () => "<h1>welcome to homepage</h1><hr>",
-  "/start": async (client) => {
+  "/start": async (client: Client) => {
+    if (!client) throw new Error("Client is required for /start");
     Session.start(client);
     return `Session token is: ${client.token}`;
   },
-  "/destroy": async (client) => {
+  "/destroy": async (client: Client) => {
     const result = `Session destroyed: ${client.token}`;
     Session.delete(client);
     return result;
   },
-  "/api/method1": async (client) => {
+  "/api/method1": async (client: Client) => {
     if (client.session) {
       client.session.set("method1", "called");
       return { data: "example result" };
@@ -24,11 +26,12 @@ const routing = {
       return { data: "access is denied" };
     }
   },
-  "/api/method2": async (client) => ({
+  "/api/method2": async (client: Client) => ({
     url: client.req.url,
     headers: client.req.headers,
   }),
-  "/api/method3": async (client) => {
+  "/api/method3": async (client: Client) => {
+    console.log("SESSION: ", client.session);
     if (client.session) {
       return [...client.session.entries()]
         .map(([key, value]) => `<b>${key}</b>: ${value}<br>`)
@@ -38,19 +41,23 @@ const routing = {
   },
 };
 
+function isRoutingKey(url: string): url is keyof typeof routing {
+  return Object.prototype.hasOwnProperty.call(routing, url);
+}
+
 const types = {
   object: JSON.stringify,
-  string: (s) => s,
-  number: (n) => n.toString(),
+  string: (s: string) => s,
+  number: (n: number) => n.toString(),
   undefined: () => "not found",
 };
 
 http
-  .createServer(async (req, res) => {
+  .createServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
     const client = await Client.getInstance(req, res);
     const { method, url, headers } = req;
     console.log(`${method} ${url} ${headers.cookie}`);
-    const handler = routing[url];
+    const handler = url && isRoutingKey(url) ? routing[url] : undefined;
     res.on("finish", () => {
       if (client.session) client.session.save();
     });
@@ -62,7 +69,7 @@ http
     handler(client).then(
       (data) => {
         const type = typeof data;
-        const serializer = types[type];
+        const serializer = types[type as keyof typeof types];
         const result = serializer(data);
         client.sendCookie();
         res.end(result);

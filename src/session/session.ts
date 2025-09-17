@@ -1,6 +1,5 @@
-"use strict";
-
-const storage = require("./storage.cjs");
+import type { Client } from "./client.ts";
+import storage from "./storage.ts";
 
 const TOKEN_LENGTH = 32;
 const ALPHA_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -19,13 +18,15 @@ const generateToken = () => {
   return key;
 };
 
-class Session extends Map {
-  constructor(token) {
+export class Session extends Map {
+  public token: string;
+
+  constructor(token: string) {
     super();
     this.token = token;
   }
 
-  static start(client) {
+  static start(client: Client) {
     if (client.session) return client.session;
     const token = generateToken();
     client.token = token;
@@ -36,13 +37,13 @@ class Session extends Map {
     return session;
   }
 
-  static restore(client) {
+  static restore(client: Client) {
     const { cookie } = client;
     if (!cookie) return;
     const sessionToken = cookie.token;
     if (sessionToken) {
       return new Promise((resolve, reject) => {
-        storage.get(sessionToken, (err, session) => {
+        storage.getData(sessionToken, (err, session) => {
           if (err) reject(new Error("No session"));
           Object.setPrototypeOf(session, Session.prototype);
           client.token = sessionToken;
@@ -53,19 +54,17 @@ class Session extends Map {
     }
   }
 
-  static delete(client) {
+  static delete(client: Client) {
     const { token } = client;
     if (token) {
       client.deleteCookie("token");
       client.token = undefined;
       client.session = null;
-      storage.delete(token);
+      storage.deleteData(token);
     }
   }
 
   save() {
-    storage.save(this.token);
+    storage.saveData(this.token);
   }
 }
-
-module.exports = Session;
