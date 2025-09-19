@@ -9,6 +9,7 @@
     "dev:cp": "tsx --watch src/child-process/master.ts",
     "dev:session": "tsx --watch src/session/server.ts",
     "dev:api-http": "tsx --watch src/api/http/server.cjs",
+    "dev:api-http-ts": "tsx --watch src/api/http/server.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
