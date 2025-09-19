@@ -41,7 +41,7 @@ function callApi(module: string, args: unknown[]): Promise<unknown> {
     apiWorker.postMessage({
       action: "call",
       id,
-      module: `${module}.cjs`,
+      module: `${module}.ts`,
       args,
     });
   });

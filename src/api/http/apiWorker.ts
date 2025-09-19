@@ -81,6 +81,7 @@ function watchModules() {
 parentPort?.on("message", async (msg: any) => {
   if (msg.action === "call") {
     const fn = modules.get(msg.module);
+
     try {
       if (!fn) throw new Error("Module not loaded");
       const result = await fn(...msg.args);
