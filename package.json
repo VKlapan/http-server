@@ -10,6 +10,7 @@
     "dev:session": "tsx --watch src/session/server.ts",
     "dev:api-http": "tsx --watch src/api/http/server.cjs",
     "dev:api-http-ts": "tsx --watch src/api/http/server.ts",
+    "dev:express": "tsx --watch src/express/server.js",
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -23,6 +24,8 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "dotenv": "^17.2.2"
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "pg": "^8.16.3"
   }
 }
